@@ -1,0 +1,22 @@
+# Build folders
+**/target/
+**/out/
+
+# Logs
+**/logs/
+*.log
+
+# IntelliJ IDEA
+.idea/
+*.iml
+
+# macOS
+.DS_Store
+
+# Environment variables
+.env
+.env.*
+
+# Local Spring configs
+application-local.yml
+application-local.properties
