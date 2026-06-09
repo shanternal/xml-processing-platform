@@ -11,6 +11,14 @@ import java.time.Instant;
 @RestControllerAdvice
 public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
 
+    @ExceptionHandler(InvalidXmlException.class)
+    public ProblemDetail handleInvalidXmlException(InvalidXmlException e) {
+        return buildProblemDetail(
+                HttpStatus.BAD_REQUEST,
+                "Invalid XML",
+                e.getMessage());
+    }
+
     @ExceptionHandler(Exception.class)
     public ProblemDetail handleInternalServerError(Exception e) {
         return buildProblemDetail(
