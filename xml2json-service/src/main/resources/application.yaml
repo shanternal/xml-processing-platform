@@ -8,3 +8,5 @@ spring:
 app:
   logging:
     max-request-body-size: 10MB
+    audit-file: logs/api-audit.log
+    audit-level: INFO
