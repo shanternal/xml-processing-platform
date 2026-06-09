@@ -4,3 +4,7 @@ server:
 spring:
   application:
     name: xml2json-service
+
+app:
+  logging:
+    max-request-body-size: 10MB
