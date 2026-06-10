@@ -14,7 +14,9 @@ import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 
 class Xml2JsonServiceTest {
 
-    private final Xml2JsonService service = new Xml2JsonService();
+    private final int MAX_NESTING_DEPTH = 10;
+
+    private final Xml2JsonService service = new Xml2JsonService(MAX_NESTING_DEPTH);
 
     /**
      * Конвертирует XML и парсит результат как обобщённый JSON-документ.
@@ -296,6 +298,35 @@ class Xml2JsonServiceTest {
             assertThatThrownBy(() -> service.convert("<broken"))
                     .isInstanceOf(InvalidXmlException.class)
                     .satisfies(e -> assertThat(e.getCause()).isNotNull());
+        }
+    }
+
+    @Nested
+    @DisplayName("Ограничение глубины вложенности")
+    class NestingDepthLimits {
+
+        @Test
+        @DisplayName("Успешная конвертация при глубине, равной установленному пределу")
+        void allowsNestingExactlyAtLimit() {
+            // MAX_NESTING_DEPTH = 10, значит 10 уровней - это допустимо
+            String xml = "<level>".repeat(MAX_NESTING_DEPTH) +
+                    "value" +
+                    "</level>".repeat(MAX_NESTING_DEPTH);
+
+            assertDoesNotThrow(() -> service.convert(xml));
+        }
+
+        @Test
+        @DisplayName("Исключение XmlDepthExceededException при превышении предела глубины")
+        void throwsExceptionWhenExceedingLimit() {
+            // 11 уровней - это уже перебор для лимита 10
+            String xml = "<level>".repeat(MAX_NESTING_DEPTH + 1) +
+                    "value" +
+                    "</level>".repeat(MAX_NESTING_DEPTH + 1);
+
+            assertThatThrownBy(() -> service.convert(xml))
+                    .isInstanceOf(dev.shanternal.xml2json.exception.InvalidXmlException.class)
+                    .hasMessageContaining("Invalid XML");
         }
     }
 }
