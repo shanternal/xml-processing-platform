@@ -2,6 +2,7 @@ package dev.shanternal.xml2json.logger;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
 import org.springframework.stereotype.Component;
 import org.springframework.web.util.ContentCachingRequestWrapper;
@@ -12,10 +13,21 @@ import java.nio.charset.StandardCharsets;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.List;
+import java.util.Set;
 import java.util.function.Supplier;
 
 @Component
 public class ApiInteractionLogger {
+
+    private final Set<String> SENSITIVE_HEADERS;
+
+    public ApiInteractionLogger(
+            @Value("#{'${app.logging.sensitive-headers:authorization,cookie,set-cookie,x-api-key,token}'.toLowerCase().split(',')}")
+            Set<String> sensitiveHeaders
+    ) {
+        this.SENSITIVE_HEADERS = sensitiveHeaders;
+    }
 
     private static final Logger API_LOGGER = LoggerFactory.getLogger("API_INTERACTION");
 
@@ -52,10 +64,10 @@ public class ApiInteractionLogger {
                 request.getMethod(),
                 request.getRequestURI(),
                 request.getQueryString(),
-                extractRequestHeaders(request),
+                maskHeaders(extractRequestHeaders(request)),
                 sanitizeBody(extractBody(request.getContentAsByteArray(), request.getCharacterEncoding())),
                 response.getStatus(),
-                extractResponseHeaders(response),
+                maskHeaders(extractResponseHeaders(response)),
                 sanitizeBody(extractBody(response.getContentAsByteArray(), response.getCharacterEncoding())),
                 durationMs
         );
@@ -73,6 +85,22 @@ public class ApiInteractionLogger {
         response.getHeaderNames()
                 .forEach(name -> headers.put(name, new ArrayList<>(response.getHeaders(name))));
         return headers;
+    }
+
+    private HttpHeaders maskHeaders(HttpHeaders rawHeaders) {
+        HttpHeaders safeHeaders = new HttpHeaders();
+
+        for (String name : rawHeaders.keySet()) {
+            List<String> values = rawHeaders.getOrDefault(name, List.of());;
+
+            if (SENSITIVE_HEADERS.contains(name.toLowerCase())) {
+                values = List.of("[MASKED]");
+            }
+
+            safeHeaders.put(name, values);
+        }
+
+        return safeHeaders;
     }
 
     private String extractBody(byte[] bytes, String encoding) {

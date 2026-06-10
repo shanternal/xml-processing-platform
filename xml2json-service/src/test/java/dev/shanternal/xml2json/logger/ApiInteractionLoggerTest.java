@@ -21,6 +21,7 @@ import org.springframework.web.util.ContentCachingResponseWrapper;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.time.Instant;
+import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -31,7 +32,7 @@ class ApiInteractionLoggerTest {
 
     @BeforeEach
     void setUp() {
-        logger = new ApiInteractionLogger();
+        logger = new ApiInteractionLogger(Set.of("authorization", "cookie", "set-cookie", "x-api-key", "proxy-authorization", "token"));
 
         logCaptor = new ListAppender<>();
         logCaptor.start();
@@ -275,9 +276,8 @@ class ApiInteractionLoggerTest {
         }
 
         @Test
-        @DisplayName("Известный чувствительный заголовок Authorization сейчас логируется как есть "
-                + "(фиксирует текущее поведение — потенциальный риск утечки секретов)")
-        void authorizationHeaderIsNotMasked() {
+        @DisplayName("Известный чувствительный заголовок Authorization маскируется")
+        void authorizationHeaderIsMasked() {
             MockHttpServletRequest request = new MockHttpServletRequest("GET", "/xml2json");
             request.addHeader("Authorization", "Bearer super-secret-token");
             request.setContent(new byte[0]);
@@ -286,7 +286,8 @@ class ApiInteractionLoggerTest {
             logger.log(wrapper, responseWrapper(200, "{}"), Instant.now(), 1L, null);
 
             String message = logCaptor.list.getFirst().getFormattedMessage();
-            assertThat(message).contains("super-secret-token");
+            assertThat(message).doesNotContain("super-secret-token");
+            assertThat(message).contains("[MASKED]");
         }
 
         @Test
