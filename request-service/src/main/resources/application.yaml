@@ -4,3 +4,21 @@ server:
 spring:
   application:
     name: request-service
+
+  datasource:
+    url: jdbc:postgresql://127.0.0.1:5432/request_service_db
+    username: admin
+    password: admin
+    driver-class-name: org.postgresql.Driver
+
+  liquibase:
+    change-log: classpath:db/changelog/db.changelog-master.yaml
+
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+        show_sql: true
+        format_sql: true
