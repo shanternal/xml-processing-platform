@@ -1,0 +1,470 @@
+{
+  "info": {
+    "name": "xml2json-service",
+    "_postman_id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+    "description": "Коллекция для Сервиса 2 — конвертация XML в JSON.\n\nБазовый URL задаётся через переменную коллекции `baseUrl`.\nПо умолчанию: http://localhost:8081",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:8081",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "POST api/v1/xml2json",
+      "item": [
+        {
+          "name": "200 — Простой XML",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/xml"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "<user>\n  <id>1</id>\n  <name>Ivan Petrov</name>\n  <email>ivan@example.com</email>\n</user>",
+              "options": {
+                "raw": {
+                  "language": "xml"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/xml2json",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "xml2json"]
+            },
+            "description": "Базовый сценарий: простая XML-структура с несколькими полями. Ожидаем 200 OK с JSON в теле ответа."
+          },
+          "response": [
+            {
+              "name": "200 OK",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  { "key": "Content-Type", "value": "application/xml" },
+                  { "key": "Accept", "value": "application/json" }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "<user>\n  <id>1</id>\n  <name>Ivan Petrov</name>\n  <email>ivan@example.com</email>\n</user>"
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/xml2json",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["api", "v1", "xml2json"]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                { "key": "Content-Type", "value": "application/json" }
+              ],
+              "body": "{\"user\":{\"id\":1,\"name\":\"Ivan Petrov\",\"email\":\"ivan@example.com\"}}"
+            }
+          ],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Response is valid JSON\", function () {",
+                  "    pm.response.to.be.json;",
+                  "    const body = pm.response.json();",
+                  "    pm.expect(body).to.be.an('object');",
+                  "});",
+                  "",
+                  "pm.test(\"Content-Type is application/json\", function () {",
+                  "    pm.expect(pm.response.headers.get('Content-Type')).to.include('application/json');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "200 — Вложенный XML",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/xml" },
+              { "key": "Accept", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "<order>\n  <id>42</id>\n  <status>NEW</status>\n  <customer>\n    <id>7</id>\n    <name>Maria Sidorova</name>\n  </customer>\n  <items>\n    <item>\n      <sku>ITEM-001</sku>\n      <qty>2</qty>\n      <price>199.99</price>\n    </item>\n    <item>\n      <sku>ITEM-002</sku>\n      <qty>1</qty>\n      <price>49.50</price>\n    </item>\n  </items>\n</order>",
+              "options": {
+                "raw": { "language": "xml" }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/xml2json",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "xml2json"]
+            },
+            "description": "Вложенная структура с массивом элементов. Проверяет корректную конвертацию иерархии и повторяющихся тегов."
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Response is valid JSON\", function () {",
+                  "    pm.response.to.be.json;",
+                  "    const body = pm.response.json();",
+                  "    pm.expect(body).to.have.property('order');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "200 — XML с атрибутами",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/xml" },
+              { "key": "Accept", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "<product id=\"101\" category=\"electronics\">\n  <name>Laptop Pro</name>\n  <price currency=\"USD\">1299.00</price>\n  <inStock>true</inStock>\n</product>",
+              "options": {
+                "raw": { "language": "xml" }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/xml2json",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "xml2json"]
+            },
+            "description": "XML с атрибутами у тегов. Библиотека org.json конвертирует атрибуты в поля JSON с префиксом."
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Response is valid JSON\", function () {",
+                  "    pm.response.to.be.json;",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "200 — XML с одним тегом",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/xml" },
+              { "key": "Accept", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "<message>Hello, World!</message>",
+              "options": {
+                "raw": { "language": "xml" }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/xml2json",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "xml2json"]
+            },
+            "description": "Минимальный валидный XML — один корневой тег с текстом."
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Response contains message field\", function () {",
+                  "    const body = pm.response.json();",
+                  "    pm.expect(body).to.have.property('message');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "400 — Невалидный XML",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/xml" },
+              { "key": "Accept", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "<user>\n  <name>Ivan\n  <email>ivan@example.com</email>\n</user>",
+              "options": {
+                "raw": { "language": "xml" }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/xml2json",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "xml2json"]
+            },
+            "description": "Незакрытый тег <name> — невалидный XML. Ожидаем 400 Bad Request с ProblemDetail в теле."
+          },
+          "response": [
+            {
+              "name": "400 Bad Request",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  { "key": "Content-Type", "value": "application/xml" },
+                  { "key": "Accept", "value": "application/json" }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "<user>\n  <name>Ivan\n  <email>ivan@example.com</email>\n</user>"
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/xml2json",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["api", "v1", "xml2json"]
+                }
+              },
+              "status": "Bad Request",
+              "code": 400,
+              "_postman_previewlanguage": "json",
+              "header": [
+                { "key": "Content-Type", "value": "application/problem+json" }
+              ],
+              "body": "{\n  \"type\": \"about:blank\",\n  \"title\": \"Invalid XML\",\n  \"status\": 400,\n  \"detail\": \"Invalid XML\",\n  \"timestamp\": \"2026-06-18T10:00:00Z\"\n}"
+            }
+          ],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 400\", function () {",
+                  "    pm.response.to.have.status(400);",
+                  "});",
+                  "",
+                  "pm.test(\"Response contains ProblemDetail fields\", function () {",
+                  "    const body = pm.response.json();",
+                  "    pm.expect(body).to.have.property('title');",
+                  "    pm.expect(body).to.have.property('status');",
+                  "    pm.expect(body).to.have.property('detail');",
+                  "    pm.expect(body).to.have.property('timestamp');",
+                  "    pm.expect(body.status).to.eql(400);",
+                  "    pm.expect(body.title).to.eql('Invalid XML');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "400 — Не XML (произвольный текст)",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/xml" },
+              { "key": "Accept", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "not xml at all",
+              "options": {
+                "raw": { "language": "text" }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/xml2json",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "xml2json"]
+            },
+            "description": "Строка без XML-разметки. После isEmpty()-проверки возвращается 400 Invalid XML."
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 400\", function () {",
+                  "    pm.response.to.have.status(400);",
+                  "});",
+                  "",
+                  "pm.test(\"Response contains ProblemDetail with title 'Invalid XML'\", function () {",
+                  "    const body = pm.response.json();",
+                  "    pm.expect(body).to.have.property('title');",
+                  "    pm.expect(body.title).to.eql('Invalid XML');",
+                  "    pm.expect(body.status).to.eql(400);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "400 — Пустое тело запроса",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/xml" },
+              { "key": "Accept", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "",
+              "options": {
+                "raw": { "language": "xml" }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/xml2json",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "xml2json"]
+            },
+            "description": "Пустое тело — Xml2JsonService бросает InvalidXmlException(\"XML is empty\"). Ожидаем 400."
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 400\", function () {",
+                  "    pm.response.to.have.status(400);",
+                  "});",
+                  "",
+                  "pm.test(\"Response contains ProblemDetail\", function () {",
+                  "    const body = pm.response.json();",
+                  "    pm.expect(body).to.have.property('title');",
+                  "    pm.expect(body.status).to.eql(400);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "400 — Пробелы вместо XML",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/xml" },
+              { "key": "Accept", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "     ",
+              "options": {
+                "raw": { "language": "xml" }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/xml2json",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "xml2json"]
+            },
+            "description": "StringUtils.hasText() вернёт false на строке из пробелов — ожидаем 400 с сообщением 'XML is empty'."
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 400\", function () {",
+                  "    pm.response.to.have.status(400);",
+                  "});",
+                  "",
+                  "pm.test(\"Detail mentions empty XML\", function () {",
+                  "    const body = pm.response.json();",
+                  "    pm.expect(body.detail).to.include('empty');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "415 — Неверный Content-Type",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Accept", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"user\": \"test\"}",
+              "options": {
+                "raw": { "language": "json" }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/xml2json",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "xml2json"]
+            },
+            "description": "Контроллер объявлен с consumes=application/xml. При отправке JSON Spring вернёт 415 Unsupported Media Type."
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 415\", function () {",
+                  "    pm.response.to.have.status(415);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

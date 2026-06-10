@@ -1,0 +1,16 @@
+server:
+  port: 8081
+
+spring:
+  application:
+    name: xml2json-service
+
+app:
+  xml-converter:
+    max-nesting-depth: 50
+
+  logging:
+    max-request-body-size: 10MB
+    audit-file: logs/api-audit.log
+    audit-level: INFO
+    sensitive-headers: authorization,cookie,set-cookie,x-api-key,token,postman-token
