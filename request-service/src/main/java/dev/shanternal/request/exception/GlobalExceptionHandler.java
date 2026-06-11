@@ -11,6 +11,15 @@ import java.time.Instant;
 @RestControllerAdvice
 public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
 
+    @ExceptionHandler(ConversionException.class)
+    public ProblemDetail handleConversionException(ConversionException e) {
+        return buildProblemDetail(
+                HttpStatus.BAD_GATEWAY,
+                "Conversion Service Error",
+                e.getMessage()
+        );
+    }
+
     @ExceptionHandler(Exception.class)
     public ProblemDetail handleInternalServerError(Exception e) {
         return buildProblemDetail(
