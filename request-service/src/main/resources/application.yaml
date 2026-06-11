@@ -22,3 +22,9 @@ spring:
         dialect: org.hibernate.dialect.PostgreSQLDialect
         show_sql: true
         format_sql: true
+
+clients:
+  conversion:
+    base-url: http://localhost:8081/api/v1
+    connect-timeout: 2s
+    read-timeout: 10s
