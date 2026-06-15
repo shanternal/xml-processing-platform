@@ -11,6 +11,15 @@ import java.time.Instant;
 @RestControllerAdvice
 public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
 
+    @ExceptionHandler(ResourceNotFoundException.class)
+    public ProblemDetail handleResourceNotFoundException(ResourceNotFoundException e) {
+        return buildProblemDetail(
+                HttpStatus.NOT_FOUND,
+                "Resource Not Found",
+                e.getMessage()
+        );
+    }
+
     @ExceptionHandler(ConversionException.class)
     public ProblemDetail handleConversionException(ConversionException e) {
         return buildProblemDetail(
