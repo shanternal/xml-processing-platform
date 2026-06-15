@@ -13,3 +13,7 @@ spring:
 clients:
   conversion:
     base-url: http://localhost:8081/api/v1
+    retry:
+      max-attempts: 2
+      delay-ms: 200
+      multiplier: 1

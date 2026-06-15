@@ -26,3 +26,7 @@ clients:
     base-url: ${CONVERSION_SERVICE_URL}
     connect-timeout: ${CONVERSION_CONNECT_TIMEOUT:2s}
     read-timeout: ${CONVERSION_READ_TIMEOUT:10s}
+    retry:
+      max-attempts: ${CONVERSION_RETRY_MAX_ATTEMPTS:3}
+      delay-ms: ${CONVERSION_RETRY_DELAY_MS:500}
+      multiplier: ${CONVERSION_RETRY_MULTIPLIER:2}
