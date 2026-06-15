@@ -1,0 +1,15 @@
+spring:
+  datasource:
+    url: jdbc:postgresql://localhost:5432/request_service_db
+    username: admin
+    password: admin
+
+  jpa:
+    properties:
+      hibernate:
+        show_sql: true
+        format_sql: true
+
+clients:
+  conversion:
+    base-url: http://localhost:8081/api/v1

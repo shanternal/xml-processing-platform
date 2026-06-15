@@ -6,9 +6,9 @@ spring:
     name: request-service
 
   datasource:
-    url: jdbc:postgresql://127.0.0.1:5432/request_service_db
-    username: admin
-    password: admin
+    url: ${DB_URL}
+    username: ${DB_USERNAME}
+    password: ${DB_PASSWORD}
     driver-class-name: org.postgresql.Driver
 
   liquibase:
@@ -20,11 +20,9 @@ spring:
     properties:
       hibernate:
         dialect: org.hibernate.dialect.PostgreSQLDialect
-        show_sql: true
-        format_sql: true
 
 clients:
   conversion:
-    base-url: http://localhost:8081/api/v1
-    connect-timeout: 2s
-    read-timeout: 10s
+    base-url: ${CONVERSION_SERVICE_URL}
+    connect-timeout: ${CONVERSION_CONNECT_TIMEOUT:2s}
+    read-timeout: ${CONVERSION_READ_TIMEOUT:10s}
