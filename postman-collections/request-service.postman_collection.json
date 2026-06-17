@@ -484,6 +484,7 @@
                   "    if (body.content.length > 0) {",
                   "        const item = body.content[0];",
                   "        pm.expect(item).to.have.property('id');",
+                  "        pm.expect(item).to.have.property('xmlHash');",
                   "        pm.expect(item).to.have.property('requestedAt');",
                   "        pm.expect(item).to.have.property('processingTimeMs');",
                   "        pm.expect(item).to.have.property('xmlTagsCount');",
