@@ -1,0 +1,13 @@
+spring:
+  jpa:
+    properties:
+      hibernate:
+        show_sql: true
+        format_sql: true
+
+clients:
+  conversion:
+    retry:
+      max-attempts: 2
+      delay-ms: 200
+      multiplier: 1
