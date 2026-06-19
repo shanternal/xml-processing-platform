@@ -1,0 +1,58 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: request-service-db
+    restart: unless-stopped
+
+    env_file:
+      - .env
+
+    environment:
+      POSTGRES_DB: ${DB_NAME}
+      POSTGRES_USER: ${DB_USERNAME}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+
+    ports:
+      - "${DB_PORT}:5432"
+
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USERNAME} -d ${DB_NAME}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  xml2json-service:
+    build:
+      context: ./xml2json-service
+
+    container_name: xml2json-service
+    restart: unless-stopped
+
+    env_file:
+      - .env
+
+    ports:
+      - "${CONVERSION_SERVICE_PORT}:8081"
+
+  request-service:
+    build:
+      context: ./request-service
+
+    container_name: request-service
+    restart: unless-stopped
+
+    env_file:
+      - .env
+
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+    ports:
+      - "${REQUEST_SERVICE_PORT}:8080"
+
+volumes:
+  postgres_data:
