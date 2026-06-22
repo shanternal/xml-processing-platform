@@ -11,6 +11,14 @@ import java.time.Instant;
 @RestControllerAdvice
 public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
 
+    @ExceptionHandler(ObjectNotFoundException.class)
+    public ProblemDetail handleObjectNotFoundException(ObjectNotFoundException e) {
+        return buildProblemDetail(
+                HttpStatus.NOT_FOUND,
+                "Object not found",
+                e.getMessage());
+    }
+
     @ExceptionHandler(Exception.class)
     public ProblemDetail handleInternalServerError(Exception e) {
         return buildProblemDetail(
