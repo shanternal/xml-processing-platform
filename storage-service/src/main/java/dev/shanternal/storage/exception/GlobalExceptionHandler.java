@@ -11,6 +11,14 @@ import java.time.Instant;
 @RestControllerAdvice
 public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
 
+    @ExceptionHandler(InvalidContentLengthException.class)
+    public ProblemDetail handleInvalidRequestException(InvalidContentLengthException e) {
+        return buildProblemDetail(
+                HttpStatus.BAD_REQUEST,
+                "Invalid Request",
+                e.getMessage());
+    }
+
     @ExceptionHandler(ObjectNotFoundException.class)
     public ProblemDetail handleObjectNotFoundException(ObjectNotFoundException e) {
         return buildProblemDetail(
