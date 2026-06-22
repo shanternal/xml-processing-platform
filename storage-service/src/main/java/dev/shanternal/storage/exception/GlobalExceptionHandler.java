@@ -27,6 +27,14 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
                 e.getMessage());
     }
 
+    @ExceptionHandler(PayloadTooLargeException.class)
+    public ProblemDetail handlePayloadTooLargeException(PayloadTooLargeException e) {
+        return buildProblemDetail(
+                HttpStatus.PAYLOAD_TOO_LARGE,
+                "Payload Too Large",
+                e.getMessage());
+    }
+
     @ExceptionHandler(UnsupportedMediaTypeException.class)
     public ProblemDetail handleInvalidRequestException(UnsupportedMediaTypeException e) {
         return buildProblemDetail(
