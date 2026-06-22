@@ -19,6 +19,14 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
                 e.getMessage());
     }
 
+    @ExceptionHandler(StorageOperationException.class)
+    public ProblemDetail handleStorageOperationException(StorageOperationException e) {
+        return buildProblemDetail(
+                HttpStatus.INTERNAL_SERVER_ERROR,
+                "Storage Operation Error",
+                e.getMessage());
+    }
+
     @ExceptionHandler(Exception.class)
     public ProblemDetail handleInternalServerError(Exception e) {
         return buildProblemDetail(
