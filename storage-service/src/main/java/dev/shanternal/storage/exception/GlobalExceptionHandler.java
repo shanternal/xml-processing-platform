@@ -19,6 +19,14 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
                 e.getMessage());
     }
 
+    @ExceptionHandler(UnsupportedMediaTypeException.class)
+    public ProblemDetail handleInvalidRequestException(UnsupportedMediaTypeException e) {
+        return buildProblemDetail(
+                HttpStatus.UNSUPPORTED_MEDIA_TYPE,
+                "Unsupported media type",
+                e.getMessage());
+    }
+
     @ExceptionHandler(StorageOperationException.class)
     public ProblemDetail handleStorageOperationException(StorageOperationException e) {
         return buildProblemDetail(
