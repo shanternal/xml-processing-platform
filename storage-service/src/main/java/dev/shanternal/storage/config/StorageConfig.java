@@ -1,5 +1,6 @@
 package dev.shanternal.storage.config;
 
+import dev.shanternal.storage.service.StorageService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -36,5 +37,10 @@ public class StorageConfig {
         }
 
         return builder.build();
+    }
+
+    @Bean
+    public StorageService storageService(S3Client s3Client) {
+        return new StorageService(s3Client, properties.getS3().getBucketName());
     }
 }
