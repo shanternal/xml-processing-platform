@@ -24,6 +24,31 @@ services:
       timeout: 5s
       retries: 10
 
+  minio:
+    image: minio/minio:latest
+    container_name: minio
+    restart: unless-stopped
+
+    environment:
+      MINIO_ROOT_USER: ${S3_ACCESS_KEY}
+      MINIO_ROOT_PASSWORD: ${S3_SECRET_KEY}
+
+    ports:
+      - "${S3_PORT}:9000"
+      - "${S3_CONSOLE_PORT}:9001"
+
+    volumes:
+      - minio_data:/data
+
+    entrypoint: /bin/sh
+    command: -c "mkdir -p /data/${S3_BUCKET_NAME} && minio server /data --console-address ':9001'"
+
+    healthcheck:
+      test: ["CMD", "mc", "ready", "local"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
   xml2json-service:
     build:
       context: ./xml2json-service
@@ -36,6 +61,23 @@ services:
 
     ports:
       - "${CONVERSION_SERVICE_PORT}:8081"
+
+  storage-service:
+    build:
+      context: ./storage-service
+
+    container_name: storage-service
+    restart: unless-stopped
+
+    env_file:
+      - .env
+
+    depends_on:
+      minio:
+        condition: service_healthy
+
+    ports:
+      - "${STORAGE_SERVICE_PORT}:8082"
 
   request-service:
     build:
@@ -50,9 +92,12 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
+      storage-service:
+        condition: service_started
 
     ports:
       - "${REQUEST_SERVICE_PORT}:8080"
 
 volumes:
   postgres_data:
+  minio_data:
