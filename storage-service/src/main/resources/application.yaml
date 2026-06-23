@@ -4,6 +4,9 @@ server:
 spring:
   application:
     name: storage-service
+  mvc:
+    async:
+      request-timeout: 60000 # 1 минута, в мс
 
 storage:
   s3:

@@ -1,5 +1,6 @@
 package dev.shanternal.storage.exception;
 
+import jakarta.validation.ConstraintViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ProblemDetail;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -17,6 +18,15 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
                 HttpStatus.BAD_REQUEST,
                 "Invalid Request",
                 e.getMessage());
+    }
+
+    @ExceptionHandler(ConstraintViolationException.class)
+    public ProblemDetail handleValidationException(ConstraintViolationException e) {
+        return buildProblemDetail(
+                HttpStatus.BAD_REQUEST,
+                "Validation Failed",
+                e.getMessage()
+        );
     }
 
     @ExceptionHandler(ObjectNotFoundException.class)
