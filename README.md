@@ -1,9 +1,10 @@
 # XML Processing Platform
 
-The platform consists of two services:
+The platform consists of three services:
 
 * **request-service** — accepts XML requests, sends them to the conversion service, stores the processed result in PostgreSQL, and provides an API for retrieving processed requests.
 * **xml2json-service** — converts XML to JSON.
+* **storage-service** — stores and retrieves raw objects in an S3-compatible object storage (MinIO).
 
 ## Technologies
 
@@ -14,6 +15,7 @@ The platform consists of two services:
 * Liquibase
 * Maven
 * Docker Compose
+* MinIO
 
 ## Project Structure
 
@@ -21,6 +23,7 @@ The platform consists of two services:
 xml-processing-platform/
 ├── request-service/
 ├── xml2json-service/
+├── storage-service/
 ├── docker-compose.yaml
 ├── .env.example
 └── postman-collections/
@@ -61,11 +64,14 @@ docker compose up -d
 
 Once the application is running, the following services will be available:
 
-| Service          | URL                   |
-|------------------| --------------------- |
-| request-service  | http://localhost:8080 |
-| xml2json-service | http://localhost:8081 |
-| PostgreSQL       | http://localhost:5432 |
+| Service          | URL                    |
+|------------------|------------------------|
+| request-service  | http://localhost:8080  |
+| xml2json-service | http://localhost:8081  |
+| storage-service  | http://localhost:8082  |
+| PostgreSQL       | http://localhost:5432  |
+| MinIO API        | http://localhost:9000  |
+| MinIO Console    | http://localhost:9001  |
 
 ### Database Migrations
 
@@ -78,6 +84,8 @@ docker compose ps
 docker compose logs -f
 docker compose logs request-service
 docker compose logs xml2json-service
+docker compose logs storage-service
+docker compose logs minio
 ```
 
 ### Stopping the Services
@@ -269,6 +277,107 @@ Content-Type: application/xml
 }
 ```
 
+### storage-service
+
+Sends and retrieves raw objects to/from an S3-compatible object storage (MinIO).
+
+#### POST `/api/v1/objects`
+
+Uploads an object to the storage. Accepts a request body of any content type (`consumes = MediaType.ALL_VALUE`) and streams it directly to S3.
+
+**Request**
+
+```http
+POST /api/v1/objects
+Content-Type: text/plain
+```
+
+```text
+Hello, storage service! This is a plain text object.
+```
+
+**Response**
+
+```http
+201 Created
+Location: http://localhost:8082/api/v1/objects/3fa85f64-5717-4562-b3fc-2c963f66afa6
+```
+
+```json
+{
+  "storageKey": "3fa85f64-5717-4562-b3fc-2c963f66afa6",
+  "sizeInBytes": 54
+}
+```
+
+If the body is empty (`Content-Length: 0`), the service returns `400 Bad Request`. If the `Content-Type` header is not a valid MIME type, it returns `415 Unsupported Media Type`.
+
+---
+
+#### GET `/api/v1/objects/{key}`
+
+Downloads an object by its storage key. The object content is streamed back to the client with `Content-Type` and `Content-Length` taken from the S3 object metadata.
+
+**Request**
+
+```http
+GET /api/v1/objects/3fa85f64-5717-4562-b3fc-2c963f66afa6
+```
+
+**Response**
+
+```http
+200 OK
+Content-Type: text/plain
+Content-Length: 54
+```
+
+```text
+Hello, storage service! This is a plain text object.
+```
+
+If the key does not exist in the storage, the service returns `404 Not Found`.
+
+---
+
+#### HEAD `/api/v1/objects/{key}`
+
+Returns object metadata (`Content-Type`, `Content-Length`) without downloading its content.
+
+**Request**
+
+```http
+HEAD /api/v1/objects/3fa85f64-5717-4562-b3fc-2c963f66afa6
+```
+
+**Response**
+
+```http
+200 OK
+Content-Type: text/plain
+Content-Length: 54
+```
+
+If the key does not exist in the storage, the service returns `404 Not Found`.
+
+---
+
+#### DELETE `/api/v1/objects/{key}`
+
+Deletes an object by its storage key. The operation is idempotent — deleting a non-existent key still returns `204 No Content`.
+
+**Request**
+
+```http
+DELETE /api/v1/objects/3fa85f64-5717-4562-b3fc-2c963f66afa6
+```
+
+**Response**
+
+```http
+204 No Content
+```
+
 ## Postman
 
 The Postman collections are located in the following directory:
@@ -276,5 +385,6 @@ The Postman collections are located in the following directory:
 ```text
 postman-collections/
 ├── request-service.postman_collection.json
-└── xml2json-service.postman_collection.json
+├── xml2json-service.postman_collection.json
+└── storage-service.postman_collection.json
 ```
