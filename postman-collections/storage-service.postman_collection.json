@@ -1,0 +1,881 @@
+{
+  "info": {
+    "name": "storage-service",
+    "_postman_id": "c3d4e5f6-a7b8-9012-cdef-123456789012",
+    "description": "Коллекция для Сервиса хранения — отправка и получение объектов в S3-совместимом хранилище (MinIO).\n\nБазовый URL задаётся через переменную коллекции `baseUrl`.\nПо умолчанию: http://localhost:8082\n\nЗагрузка (POST) буферизует тело запроса в памяти перед отправкой в S3, поэтому Content-Length не требуется. Максимальный размер тела ограничен настройкой storage.max-upload-size (по умолчанию 100MB, переопределяется через STORAGE_MAX_UPLOAD_SIZE).",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:8082",
+      "type": "string"
+    },
+    {
+      "key": "objectKey",
+      "value": "",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "POST api/v1/objects",
+      "item": [
+        {
+          "name": "201 — Успешная загрузка",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "text/plain"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "Hello, storage service! This is a plain text object.",
+              "options": {
+                "raw": {
+                  "language": "text"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/objects",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "objects"
+              ]
+            },
+            "description": "Базовый сценарий: загрузка небольшого текстового объекта. Ожидаем 201 Created с заголовком Location и телом StorageUploadResult { storageKey, sizeInBytes }."
+          },
+          "response": [
+            {
+              "name": "201 Created",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "text/plain"
+                  },
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "Hello, storage service! This is a plain text object."
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/objects",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "v1",
+                    "objects"
+                  ]
+                }
+              },
+              "status": "Created",
+              "code": 201,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                },
+                {
+                  "key": "Location",
+                  "value": "http://localhost:8082/api/v1/objects/3fa85f64-5717-4562-b3fc-2c963f66afa6"
+                }
+              ],
+              "body": "{\n  \"storageKey\": \"3fa85f64-5717-4562-b3fc-2c963f66afa6\",\n  \"sizeInBytes\": 54\n}"
+            }
+          ],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 201\", function () {",
+                  "    pm.response.to.have.status(201);",
+                  "});",
+                  "",
+                  "pm.test(\"Response contains storageKey and sizeInBytes\", function () {",
+                  "    pm.response.to.be.json;",
+                  "    const body = pm.response.json();",
+                  "    pm.expect(body).to.have.property('storageKey');",
+                  "    pm.expect(body).to.have.property('sizeInBytes');",
+                  "    pm.expect(body.sizeInBytes).to.be.a('number');",
+                  "});",
+                  "",
+                  "pm.test(\"Location header is present\", function () {",
+                  "    pm.expect(pm.response.headers.get('Location')).to.include('/api/v1/objects/');",
+                  "});",
+                  "",
+                  "pm.test(\"Content-Type is application/json\", function () {",
+                  "    pm.expect(pm.response.headers.get('Content-Type')).to.include('application/json');",
+                  "});",
+                  "",
+                  "const body = pm.response.json();",
+                  "pm.collectionVariables.set('objectKey', body.storageKey);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "201 — Загрузка JSON-объекта",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"user\": {\n    \"id\": 1,\n    \"name\": \"Ivan Petrov\"\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/objects",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "objects"
+              ]
+            },
+            "description": "Загрузка объекта с другим Content-Type. Проверяет, что сервис не привязан к конкретному типу содержимого (consumes = MediaType.ALL_VALUE)."
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 201\", function () {",
+                  "    pm.response.to.have.status(201);",
+                  "});",
+                  "",
+                  "pm.test(\"Response contains storageKey\", function () {",
+                  "    const body = pm.response.json();",
+                  "    pm.expect(body).to.have.property('storageKey');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "400 — Пустое тело запроса",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "text/plain"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "",
+              "options": {
+                "raw": {
+                  "language": "text"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/objects",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "objects"
+              ]
+            },
+            "description": "Пустое тело запроса. StorageService буферизует тело в byte[] и, получив массив длиной 0, бросает InvalidContentLengthException → 400 Bad Request с ProblemDetail."
+          },
+          "response": [
+            {
+              "name": "400 Bad Request",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "text/plain"
+                  },
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": ""
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/objects",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "v1",
+                    "objects"
+                  ]
+                }
+              },
+              "status": "Bad Request",
+              "code": 400,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/problem+json"
+                }
+              ],
+              "body": "{\n  \"type\": \"about:blank\",\n  \"title\": \"Invalid Request\",\n  \"status\": 400,\n  \"detail\": \"Request body must not be empty\",\n  \"timestamp\": \"2026-06-29T00:00:00Z\"\n}"
+            }
+          ],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 400\", function () {",
+                  "    pm.response.to.have.status(400);",
+                  "});",
+                  "",
+                  "pm.test(\"Response contains ProblemDetail fields\", function () {",
+                  "    const body = pm.response.json();",
+                  "    pm.expect(body).to.have.property('title');",
+                  "    pm.expect(body).to.have.property('status');",
+                  "    pm.expect(body).to.have.property('detail');",
+                  "    pm.expect(body).to.have.property('timestamp');",
+                  "    pm.expect(body.status).to.eql(400);",
+                  "    pm.expect(body.title).to.eql('Invalid Request');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "415 — Некорректный Content-Type",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "not-a-valid-mime-type"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "some content",
+              "options": {
+                "raw": {
+                  "language": "text"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/objects",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "objects"
+              ]
+            },
+            "description": "Заголовок Content-Type не является валидным MIME-типом. MediaType.parseMediaType() бросит InvalidMediaTypeException → UnsupportedMediaTypeException → 415."
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 415\", function () {",
+                  "    pm.response.to.have.status(415);",
+                  "});",
+                  "",
+                  "pm.test(\"Response contains ProblemDetail\", function () {",
+                  "    const body = pm.response.json();",
+                  "    pm.expect(body.status).to.eql(415);",
+                  "    pm.expect(body.title).to.eql('Unsupported Media Type');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "413 — Превышен максимальный размер",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "text/plain"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "<тело больше STORAGE_MAX_UPLOAD_SIZE — вставьте вручную либо сгенерируйте через pre-request script>",
+              "options": {
+                "raw": {
+                  "language": "text"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/objects",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "objects"
+              ]
+            },
+            "description": "Документационный кейс. По умолчанию лимит — 100MB (storage.max-upload-size / STORAGE_MAX_UPLOAD_SIZE), поэтому руками воспроизвести неудобно — либо отправьте тело больше лимита, либо на тестовом окружении временно понизьте STORAGE_MAX_UPLOAD_SIZE (например, до 1KB) и отправьте тело больше этого значения. StorageService.readFully() читает не более maxUploadSizeBytes + 1 байт, видит превышение и бросает PayloadTooLargeException → 413 Payload Too Large с ProblemDetail."
+          },
+          "response": [
+            {
+              "name": "413 Payload Too Large",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "text/plain"
+                  },
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "<тело больше лимита>"
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/objects",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "v1",
+                    "objects"
+                  ]
+                }
+              },
+              "status": "Payload Too Large",
+              "code": 413,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/problem+json"
+                }
+              ],
+              "body": "{\n  \"type\": \"about:blank\",\n  \"title\": \"Payload Too Large\",\n  \"status\": 413,\n  \"detail\": \"Uploaded content exceeds the maximum allowed size of 1024 bytes\",\n  \"timestamp\": \"2026-06-29T00:00:00Z\"\n}"
+            }
+          ],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 413 (только если лимит был понижен для этого запуска)\", function () {",
+                  "    if (pm.response.code === 413) {",
+                  "        pm.response.to.have.status(413);",
+                  "        const body = pm.response.json();",
+                  "        pm.expect(body.status).to.eql(413);",
+                  "        pm.expect(body.title).to.eql('Payload Too Large');",
+                  "    }",
+                  "});"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "GET api/v1/objects/{key}",
+      "item": [
+        {
+          "name": "200 — Скачивание существующего объекта",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "*/*"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/objects/{{objectKey}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "objects",
+                "{{objectKey}}"
+              ]
+            },
+            "description": "Скачивание объекта по ключу, полученному из предыдущего запроса POST api/v1/objects (переменная objectKey). Ожидаем 200 OK, тело в виде потока байт, заголовки Content-Type и Content-Length из метаданных S3."
+          },
+          "response": [
+            {
+              "name": "200 OK",
+              "originalRequest": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "*/*"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/objects/{{objectKey}}",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "v1",
+                    "objects",
+                    "{{objectKey}}"
+                  ]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "text",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "text/plain"
+                },
+                {
+                  "key": "Content-Length",
+                  "value": "54"
+                }
+              ],
+              "body": "Hello, storage service! This is a plain text object."
+            }
+          ],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Content-Type header is present\", function () {",
+                  "    pm.expect(pm.response.headers.get('Content-Type')).to.not.be.null;",
+                  "});",
+                  "",
+                  "pm.test(\"Content-Length header matches body size\", function () {",
+                  "    const contentLength = pm.response.headers.get('Content-Length');",
+                  "    pm.expect(Number(contentLength)).to.eql(pm.response.responseSize);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "404 — Несуществующий ключ",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "*/*"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/objects/00000000-0000-0000-0000-000000000000",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "objects",
+                "00000000-0000-0000-0000-000000000000"
+              ]
+            },
+            "description": "Ключ отсутствует в хранилище. S3Client.getObject() бросит NoSuchKeyException → ObjectNotFoundException → 404 с ProblemDetail."
+          },
+          "response": [
+            {
+              "name": "404 Not Found",
+              "originalRequest": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "*/*"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/objects/00000000-0000-0000-0000-000000000000",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "v1",
+                    "objects",
+                    "00000000-0000-0000-0000-000000000000"
+                  ]
+                }
+              },
+              "status": "Not Found",
+              "code": 404,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/problem+json"
+                }
+              ],
+              "body": "{\n  \"type\": \"about:blank\",\n  \"title\": \"Object not found\",\n  \"status\": 404,\n  \"detail\": \"The object was not found in the storage: key=00000000-0000-0000-0000-000000000000\",\n  \"timestamp\": \"2026-06-29T00:00:00Z\"\n}"
+            }
+          ],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 404\", function () {",
+                  "    pm.response.to.have.status(404);",
+                  "});",
+                  "",
+                  "pm.test(\"Response contains ProblemDetail fields\", function () {",
+                  "    const body = pm.response.json();",
+                  "    pm.expect(body).to.have.property('title');",
+                  "    pm.expect(body).to.have.property('status');",
+                  "    pm.expect(body).to.have.property('detail');",
+                  "    pm.expect(body).to.have.property('timestamp');",
+                  "    pm.expect(body.status).to.eql(404);",
+                  "    pm.expect(body.title).to.eql('Object not found');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "HEAD api/v1/objects/{key}",
+      "item": [
+        {
+          "name": "200 — Метаданные существующего объекта",
+          "request": {
+            "method": "HEAD",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "*/*"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/objects/{{objectKey}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "objects",
+                "{{objectKey}}"
+              ]
+            },
+            "description": "Получение метаданных объекта без скачивания тела. Ожидаем 200 OK с заголовками Content-Type и Content-Length, пустое тело ответа."
+          },
+          "response": [
+            {
+              "name": "200 OK",
+              "originalRequest": {
+                "method": "HEAD",
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "*/*"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/objects/{{objectKey}}",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "v1",
+                    "objects",
+                    "{{objectKey}}"
+                  ]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "text",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "text/plain"
+                },
+                {
+                  "key": "Content-Length",
+                  "value": "54"
+                }
+              ],
+              "body": ""
+            }
+          ],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Content-Type and Content-Length headers are present\", function () {",
+                  "    pm.expect(pm.response.headers.get('Content-Type')).to.not.be.null;",
+                  "    pm.expect(pm.response.headers.get('Content-Length')).to.not.be.null;",
+                  "});",
+                  "",
+                  "pm.test(\"Response body is empty\", function () {",
+                  "    pm.expect(pm.response.text()).to.eql('');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "404 — Несуществующий ключ",
+          "request": {
+            "method": "HEAD",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "*/*"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/objects/00000000-0000-0000-0000-000000000000",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "objects",
+                "00000000-0000-0000-0000-000000000000"
+              ]
+            },
+            "description": "Ключ отсутствует в хранилище. S3Client.headObject() бросит NoSuchKeyException → ObjectNotFoundException → 404. Тело ProblemDetail при HEAD-запросе Postman не показывает, но статус проверяем."
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 404\", function () {",
+                  "    pm.response.to.have.status(404);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "DELETE api/v1/objects/{key}",
+      "item": [
+        {
+          "name": "204 — Удаление существующего объекта",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "*/*"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/objects/{{objectKey}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "objects",
+                "{{objectKey}}"
+              ]
+            },
+            "description": "Удаление объекта, загруженного в POST api/v1/objects. Ожидаем 204 No Content."
+          },
+          "response": [
+            {
+              "name": "204 No Content",
+              "originalRequest": {
+                "method": "DELETE",
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "*/*"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/objects/{{objectKey}}",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "v1",
+                    "objects",
+                    "{{objectKey}}"
+                  ]
+                }
+              },
+              "status": "No Content",
+              "code": 204,
+              "_postman_previewlanguage": "text",
+              "header": [],
+              "body": ""
+            }
+          ],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 204\", function () {",
+                  "    pm.response.to.have.status(204);",
+                  "});",
+                  "",
+                  "pm.test(\"Response body is empty\", function () {",
+                  "    pm.expect(pm.response.text()).to.eql('');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "204 — Повторное удаление (идемпотентность)",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "*/*"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/objects/{{objectKey}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "objects",
+                "{{objectKey}}"
+              ]
+            },
+            "description": "Повторное удаление уже удалённого (несуществующего) ключа. S3 DeleteObject идемпотентен и не бросает NoSuchKeyException — StorageService.delete() не проверяет существование объекта. Ожидаем 204."
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 204\", function () {",
+                  "    pm.response.to.have.status(204);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
