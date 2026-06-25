@@ -1,4 +1,4 @@
-package dev.shanternal.request.client;
+package dev.shanternal.request.client.conversion;
 
 import dev.shanternal.request.exception.ConversionException;
 import lombok.RequiredArgsConstructor;

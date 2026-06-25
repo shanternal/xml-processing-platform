@@ -1,6 +1,6 @@
 package dev.shanternal.request.service;
 
-import dev.shanternal.request.client.ConversionClient;
+import dev.shanternal.request.client.conversion.ConversionClient;
 import dev.shanternal.request.dto.request.ProcessedRequestFilter;
 import dev.shanternal.request.dto.response.ConvertXmlResult;
 import dev.shanternal.request.dto.response.Page;
