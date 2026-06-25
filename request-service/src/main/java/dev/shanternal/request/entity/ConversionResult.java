@@ -27,8 +27,7 @@ public class ConversionResult {
     @ToString.Include
     private String xmlHash;
 
-    @NotBlank
-    @Column(name = "canonical_xml", nullable = false, columnDefinition = "text")
+    @Column(name = "canonical_xml", columnDefinition = "text")
     private String canonicalXml;
 
     @NotNull
@@ -37,8 +36,7 @@ public class ConversionResult {
     @ToString.Include
     private Integer xmlTagsCount;
 
-    @NotBlank
-    @Column(name = "target_json", nullable = false, columnDefinition = "text")
+    @Column(name = "target_json", columnDefinition = "text")
     private String targetJson;
 
     @NotNull
@@ -46,6 +44,21 @@ public class ConversionResult {
     @Column(name = "json_keys_count", nullable = false)
     @ToString.Include
     private Integer jsonKeysCount;
+
+    @Size(max = 36, message = "External id must not exceed 36 characters")
+    @Column(name = "external_id", length = 36, unique = true)
+    @ToString.Include
+    private String externalId;
+
+    public boolean isMigrated() {
+        return externalId != null;
+    }
+
+    public void markAsMigrated(String externalId) {
+        this.externalId = externalId;
+        this.canonicalXml = null;
+        this.targetJson = null;
+    }
 
     @Override
     public final boolean equals(Object o) {
