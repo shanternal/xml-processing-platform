@@ -29,4 +29,22 @@ public class RestClientConfig {
                 .requestFactory(ClientHttpRequestFactoryBuilder.detect().build(settings))
                 .build();
     }
+
+    @Bean
+    public RestClient storageRestClient(
+            RestClient.Builder builder,
+            @Value("${clients.storage.base-url}") String baseUrl,
+            @Value("${clients.storage.connect-timeout}") Duration connectTimeout,
+            @Value("${clients.storage.read-timeout}") Duration readTimeout) {
+
+        ClientHttpRequestFactorySettings settings =
+                ClientHttpRequestFactorySettings.defaults()
+                        .withConnectTimeout(connectTimeout)
+                        .withReadTimeout(readTimeout);
+
+        return builder
+                .baseUrl(baseUrl)
+                .requestFactory(ClientHttpRequestFactoryBuilder.detect().build(settings))
+                .build();
+    }
 }
