@@ -2,7 +2,7 @@
 
 The platform consists of three services:
 
-* **request-service** — accepts XML requests, sends them to the conversion service, stores the processed result in PostgreSQL, and provides an API for retrieving processed requests.
+* **request-service** — accepts XML requests, sends them to the conversion service, stores the processed result in PostgreSQL (deduplicated by XML hash), and provides an API for retrieving processed requests. A scheduled job periodically migrates older results to storage-service (S3).
 * **xml2json-service** — converts XML to JSON.
 * **storage-service** — stores and retrieves raw objects in an S3-compatible object storage (MinIO).
 
@@ -106,6 +106,15 @@ docker compose down -v
 
 ### request-service
 
+**Configuration**
+
+| Environment variable        | Default | Description                                              |
+|------------------------------|---------|------------------------------------------------------------|
+| `MIGRATION_ENABLED`          | `true`  | Enables the scheduled migration of results to storage-service. |
+| `MIGRATION_INTERVAL_MS`      | `60000` | Delay between migration batch runs.                        |
+| `MIGRATION_INITIAL_DELAY_MS` | `30000` | Delay before the first migration run after startup.        |
+| `MIGRATION_BATCH_SIZE`       | `20`    | Max records migrated per run.                               |
+
 #### POST `/api/v1/request`
 
 Converts XML to JSON, stores the result in the database, and returns the created record.
@@ -156,6 +165,8 @@ Retrieves information about a processed request.
 ```http
 GET /api/v1/request/3
 ```
+
+Once a record is migrated to storage-service, its data is transparently fetched from S3 instead of PostgreSQL; the response shape is unchanged.
 
 **Response**
 
@@ -254,9 +265,9 @@ Content-Type: application/xml
 
 ```xml
 <product id="101" category="electronics">
-  <name>Laptop Pro</name>
-  <price currency="USD">1299.00</price>
-  <inStock>true</inStock>
+    <name>Laptop Pro</name>
+    <price currency="USD">1299.00</price>
+    <inStock>true</inStock>
 </product>
 ```
 
