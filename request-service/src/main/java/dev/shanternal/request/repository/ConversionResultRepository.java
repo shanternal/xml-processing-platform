@@ -45,4 +45,17 @@ public class ConversionResultRepository {
                 sessionFactory.getCurrentSession().get(ConversionResult.class, xmlHash)
         );
     }
+
+    public Optional<ConversionResult> claimNextForMigration() {
+        Session session = sessionFactory.getCurrentSession();
+
+        return session.createNativeQuery("""
+                    SELECT * FROM conversion_results
+                    WHERE external_id IS NULL
+                    ORDER BY xml_hash
+                    FOR UPDATE SKIP LOCKED
+                    LIMIT 1
+                    """, ConversionResult.class)
+                .uniqueResultOptional();
+    }
 }

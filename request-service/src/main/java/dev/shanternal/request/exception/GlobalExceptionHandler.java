@@ -21,6 +21,15 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
         );
     }
 
+    @ExceptionHandler(ConstraintViolationException.class)
+    public ProblemDetail handleValidationException(ConstraintViolationException e) {
+        return buildProblemDetail(
+                HttpStatus.BAD_REQUEST,
+                "Validation Failed",
+                e.getMessage()
+        );
+    }
+
     @ExceptionHandler(ResourceNotFoundException.class)
     public ProblemDetail handleResourceNotFoundException(ResourceNotFoundException e) {
         return buildProblemDetail(
@@ -39,11 +48,11 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
         );
     }
 
-    @ExceptionHandler(ConstraintViolationException.class)
-    public ProblemDetail handleValidationException(ConstraintViolationException e) {
+    @ExceptionHandler(StorageException.class)
+    public ProblemDetail handleStorageException(StorageException e) {
         return buildProblemDetail(
-                HttpStatus.BAD_REQUEST,
-                "Validation Failed",
+                HttpStatus.BAD_GATEWAY,
+                "Storage Service Error",
                 e.getMessage()
         );
     }

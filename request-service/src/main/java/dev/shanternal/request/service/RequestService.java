@@ -1,11 +1,13 @@
 package dev.shanternal.request.service;
 
-import dev.shanternal.request.client.ConversionClient;
+import dev.shanternal.request.client.conversion.ConversionClient;
+import dev.shanternal.request.client.storage.StorageClient;
 import dev.shanternal.request.dto.request.ProcessedRequestFilter;
 import dev.shanternal.request.dto.response.ConvertXmlResult;
 import dev.shanternal.request.dto.response.Page;
 import dev.shanternal.request.dto.response.ProcessedRequestDetail;
 import dev.shanternal.request.dto.response.ProcessedRequestSummary;
+import dev.shanternal.request.dto.storage.ConversionPayload;
 import dev.shanternal.request.entity.ConversionResult;
 import dev.shanternal.request.entity.ProcessedRequest;
 import dev.shanternal.request.exception.ConversionException;
@@ -34,6 +36,7 @@ public class RequestService {
     private final ProcessedRequestRepository processedRequestRepository;
     private final ConversionResultRepository conversionResultRepository;
     private final ConversionClient conversionClient;
+    private final StorageClient storageClient;
     private final RequestMapper requestMapper;
     private final XmlProcessor xmlProcessor;
     private final JsonProcessor jsonProcessor;
@@ -67,13 +70,13 @@ public class RequestService {
                 )
         );
 
-        return requestMapper.toConvertXmlResult(processedRequest);
+        return requestMapper.toConvertXmlResult(processedRequest, resolvePayload(conversionResult));
     }
 
     private ConversionResult findOrCreateConversionResult(String xml, String xmlHash, String canonicalXml, int xmlTagsCount) {
         Optional<ConversionResult> cached = Optional.ofNullable(
                 readTransactionTemplate.execute(status ->
-                conversionResultRepository.findByXmlHash(xmlHash).orElse(null)));
+                        conversionResultRepository.findByXmlHash(xmlHash).orElse(null)));
 
         return cached.orElseGet(() -> createConversionResult(xml, xmlHash, canonicalXml, xmlTagsCount));
     }
@@ -109,6 +112,14 @@ public class RequestService {
         ProcessedRequest processedRequest = processedRequestRepository.findByIdWithConversion(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Processed request with id=%d not found".formatted(id)));
 
-        return requestMapper.toProcessedRequestDetail(processedRequest);
+        ConversionPayload payload = resolvePayload(processedRequest.getConversionResult());
+        return requestMapper.toProcessedRequestDetail(processedRequest, payload);
+    }
+
+    private ConversionPayload resolvePayload(ConversionResult conversionResult) {
+        if (!conversionResult.isMigrated()) {
+            return new ConversionPayload(conversionResult.getCanonicalXml(), conversionResult.getTargetJson());
+        }
+        return storageClient.download(conversionResult.getExternalId());
     }
 }

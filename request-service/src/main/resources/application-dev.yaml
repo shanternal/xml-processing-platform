@@ -11,3 +11,8 @@ clients:
       max-attempts: 2
       delay-ms: 200
       multiplier: 1
+  storage:
+    retry:
+      max-attempts: 2
+      delay-ms: 200
+      multiplier: 1
