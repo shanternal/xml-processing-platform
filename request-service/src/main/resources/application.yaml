@@ -41,3 +41,10 @@ clients:
       max-attempts: ${STORAGE_RETRY_MAX_ATTEMPTS:3}
       delay-ms: ${STORAGE_RETRY_DELAY_MS:500}
       multiplier: ${STORAGE_RETRY_MULTIPLIER:2}
+
+migration:
+  storage:
+    enabled: ${MIGRATION_ENABLED:true}
+    interval-ms: ${MIGRATION_INTERVAL_MS:60000}
+    initial-delay-ms: ${MIGRATION_INITIAL_DELAY_MS:30000}
+    batch-size: ${MIGRATION_BATCH_SIZE:20}
